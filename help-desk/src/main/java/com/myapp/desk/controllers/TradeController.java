@@ -1,7 +1,7 @@
 package com.myapp.desk.controllers;
 
 import com.myapp.desk.domain.Trade;
-import com.myapp.desk.repository.TradeRepository;
+import com.myapp.desk.service.TradeService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -27,13 +27,13 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 
-@Tag(name = "Trades", description = "Trade Management API")
+@Tag(name = "Trades", description = "Trade Management API with Redis Caching")
 @RestController
 @RequestMapping("/api/trades")
 @CrossOrigin(origins = "*", methods = {RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE})
 public class TradeController {
     @Autowired
-    private TradeRepository tradeRepository;
+    private TradeService tradeService;
 
     @Operation(
             summary = "Retrieve all trades",
@@ -44,37 +44,36 @@ public class TradeController {
             @ApiResponse(responseCode = "500", content = { @Content(schema = @Schema()) }) })
     @GetMapping
     public List<Trade> getAllTrades() {
-        return tradeRepository.findAll();
+        return tradeService.getAllTrades();
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Trade> getTradeById(@PathVariable Long id) {
-        Optional<Trade> trade = tradeRepository.findById(id);
+        Optional<Trade> trade = tradeService.getTradeById(id);
         return trade.map(ResponseEntity::ok).orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @PostMapping
     public ResponseEntity<Trade> createTrade(@RequestBody Trade trade) {
-        Trade savedTrade = tradeRepository.save(trade);
+        Trade savedTrade = tradeService.createTrade(trade);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedTrade);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Trade> updateTrade(@PathVariable Long id, @RequestBody Trade trade) {
-        if (!tradeRepository.existsById(id)) {
+        if (!tradeService.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
-        trade.setId(id);
-        Trade updatedTrade = tradeRepository.save(trade);
+        Trade updatedTrade = tradeService.updateTrade(id, trade);
         return ResponseEntity.ok(updatedTrade);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteTrade(@PathVariable Long id) {
-        if (!tradeRepository.existsById(id)) {
+        if (!tradeService.existsById(id)) {
             return ResponseEntity.notFound().build();
         }
-        tradeRepository.deleteById(id);
+        tradeService.deleteTrade(id);
         return ResponseEntity.noContent().build();
     }
 }

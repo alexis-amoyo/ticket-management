@@ -1,6 +1,7 @@
 package com.myapp.desk.service;
 
 import com.myapp.desk.domain.Instrument;
+import com.myapp.desk.exception.InstrumentNotFoundException;
 import com.myapp.desk.repository.InstrumentRepository;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.CacheEvict;
@@ -35,6 +36,7 @@ public class InstrumentService {
     // Create new instrument - cache the result
     @CachePut(value = "instruments", key = "#result.id")
     public Instrument createInstrument(Instrument instrument) {
+        
         Instrument savedInstrument = instrumentRepository.save(instrument);
         // Evict the 'all' cache since we added a new instrument
         evictAllInstrumentsCache();
@@ -44,7 +46,11 @@ public class InstrumentService {
     // Update instrument - update cache
     @CachePut(value = "instruments", key = "#id")
     public Instrument updateInstrument(Long id, Instrument instrument) {
-        instrument.setId(id);
+        // Validate that the instrument exists before updating
+        if (!instrumentRepository.existsById(id)) {
+            throw new InstrumentNotFoundException(id);
+        }
+        
         Instrument updatedInstrument = instrumentRepository.save(instrument);
         // Evict the 'all' cache since we updated an instrument
         evictAllInstrumentsCache();
@@ -54,6 +60,11 @@ public class InstrumentService {
     // Delete instrument - evict from cache
     @CacheEvict(value = "instruments", key = "#id")
     public void deleteInstrument(Long id) {
+        // Validate that the instrument exists before deleting
+        if (!instrumentRepository.existsById(id)) {
+            throw new InstrumentNotFoundException(id);
+        }
+        
         instrumentRepository.deleteById(id);
         // Evict the 'all' cache since we removed an instrument
         evictAllInstrumentsCache();

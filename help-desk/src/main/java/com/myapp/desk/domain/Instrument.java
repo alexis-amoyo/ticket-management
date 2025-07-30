@@ -2,6 +2,8 @@ package com.myapp.desk.domain;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -16,6 +18,7 @@ public class Instrument implements Serializable {
 
     @Schema(description = "Unique identifier of the instrument", example = "1", required = true)
     @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
     
     @Schema(description = "Trading symbol of the instrument", example = "AAPL", required = true)
